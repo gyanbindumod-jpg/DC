@@ -172,7 +172,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "👋 *Welcome to Study Apk Mod PW Bot!*\n\n"
             "To view subjects and lectures for a batch, send the command:\n"
             "`/batchid <batchId>` or `/start <batchId>`\n\n"
-            "💡 You can also pick courses from our Web Catalog and click *Open in @studyapkmodpw_bot*!",
+            "💡 You can also pick courses from our Web Catalog!",
             parse_mode="Markdown"
         )
         return
@@ -302,18 +302,14 @@ async def handle_tab_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     keyboard = []
     if content_type in ["videos", "DppVideos"]:
-        for item in items[:25]:  # Limit 25 per page
+        for item in items[:25]:
             title = item.get("topic") or item.get("title") or item.get("name") or "Lecture Video"
-            video_id = (
-                item.get("url") or item.get("id") or item.get("_id") or ""
-            ).replace("https://", "").replace("/", "_")
             
-            # Clean videoId
             raw_vid = item.get("_id") or item.get("id") or ""
             if not raw_vid and "video" in item and isinstance(item["video"], dict):
                 raw_vid = item["video"].get("_id") or item["video"].get("id") or ""
 
-            cb_key = store_data("lec", batch_id=batch_id, video_id=raw_vid or video_id, title=title)
+            cb_key = store_data("lec", batch_id=batch_id, video_id=raw_vid, title=title)
             keyboard.append([InlineKeyboardButton(f"▶️ {title}", callback_data=cb_key)])
     else:
         # Notes / DPP PDFs
@@ -353,7 +349,7 @@ async def handle_lecture_callback(update: Update, context: ContextTypes.DEFAULT_
         await query.edit_message_text("❌ Video details missing.")
         return
 
-    # Link format specified by user: https://t.me/AS_MultiverseRoBot?start={batchId}_{videoId}
+    # Link format: https://t.me/AS_MultiverseRoBot?start={batchId}_{videoId}
     download_url = f"https://t.me/AS_MultiverseRoBot?start={batch_id}_{video_id}"
 
     keyboard = [
@@ -371,7 +367,7 @@ async def handle_lecture_callback(update: Update, context: ContextTypes.DEFAULT_
 
 def main():
     if not BOT_TOKEN:
-        logger.error("❌ ERROR: BOT_TOKEN environment variable is missing! Please add BOT_TOKEN in Railway Variables.")
+        logger.error("❌ ERROR: BOT_TOKEN environment variable is missing! Please set BOT_TOKEN in Railway variables.")
         sys.exit(1)
 
     application = Application.builder().token(BOT_TOKEN).build()
@@ -386,7 +382,7 @@ def main():
     application.add_handler(CallbackQueryHandler(handle_tab_callback, pattern=r"^tab:"))
     application.add_handler(CallbackQueryHandler(handle_lecture_callback, pattern=r"^lec:"))
 
-    logger.info("Bot started successfully. Polling messages...")
+    logger.info("Bot started successfully. Listening for incoming commands...")
     application.run_polling()
 
 if __name__ == "__main__":
